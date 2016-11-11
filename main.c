@@ -45,7 +45,13 @@ void criticalSection(int who) {
 Produces and changes semaphores accordingly.
 */
 void producer() {
-  criticalSection(PROD);
+  for(int i = 0; i < 5; i++){
+    sem_wait(mutexEmpty);
+    sem_wait(mutexLock);
+    criticalSection(PROD);
+    sem_post(mutexLock);
+    sem_post(mutexFull);
+  }
 }
 
 /**
