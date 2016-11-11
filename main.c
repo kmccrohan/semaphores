@@ -52,16 +52,30 @@ void producer() {
 Consumes and changes semaphores accordingly.
 */
 void consumer() {
-  criticalSection(CONS);
+
+  for (int i=0; i < 10; i++) {
+    sem_wait(mutexFull);
+    sem_wait(mutexLock);
+    criticalSection(CONS);
+    sem_post(mutexLock);
+    sem_post(mutexEmpty);
+  }
+  
   exit(0);
 }
 
-void createSemaphores(int intialValueFull){
-  mutexFull = sem_open(FULL_NAME, O_CREAT, S_IRWXG, intialValueFull);
-  mutexEmpty = sem_open(EMPTY_NAME, O_CREAT, S_IRWXG, 0);
+/**
+Creates semaphores with specified initial value in empty semaphore.
+*/
+void createSemaphores(int initialValueFull){
+  mutexFull = sem_open(FULL_NAME, O_CREAT, S_IRWXG, 0);
+  mutexEmpty = sem_open(EMPTY_NAME, O_CREAT, S_IRWXG, initialValueFull);
   mutexLock = sem_open(LOCK_NAME, O_CREAT, S_IRWXG, 1);
 }
 
+/**
+Closes semaphores.
+*/
 void closeSemaphores(){
   sem_close(mutexFull);
   sem_close(mutexEmpty);
