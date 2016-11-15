@@ -53,7 +53,8 @@ void criticalSection(int who)
 /**
 Produces and changes semaphores accordingly.
 */
-void producer() {
+void producer() 
+{
   
   for(int i = 0; i < 5; i++)
   {
@@ -87,7 +88,8 @@ void consumer()
 /**
 Creates semaphores with specified initial value in empty semaphore.
 */
-void createSemaphores(int initialValueFull){
+void createSemaphores(int initialValueFull)
+{
 
   //set the buffer values for wait.
   semWait[0].sem_num = 0;
@@ -119,7 +121,8 @@ void createSemaphores(int initialValueFull){
 /**
 Closes semaphores.
 */
-void closeSemaphores(){
+void closeSemaphores()
+{
   semctl(semFull, 1, IPC_RMID, NULL);
   semctl(semEmpty, 1, IPC_RMID, NULL);
   semctl(semLock, 1, IPC_RMID, NULL);
@@ -128,7 +131,8 @@ void closeSemaphores(){
 /**
 Main
 */
-int main(int argc, char** argv) {
+int main(int argc, char** argv) 
+{
 
   createSemaphores(100);
   
