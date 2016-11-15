@@ -30,11 +30,21 @@ int semFull, semEmpty, semLock;
 #define PROD 1
 #define CONS 0
 
+void printSemValues() 
+{
+  int m, e, f; 
+  m = semctl(semLock, 0, GETVAL, 0);
+  e = semctl(semEmpty, 0, GETVAL, 0);
+  f = semctl(semFull, 0, GETVAL, 0);
+  printf("Lock: %d empty: %d full: %d\n", m,e,f);
+
+}
 
 /**
 Executes critical sectiono of both consumer and producer.
 */
-void criticalSection(int who) {
+void criticalSection(int who) 
+{
   if (who == PROD)
     printf("I am the producer producing.\n");
   else
@@ -45,12 +55,14 @@ void criticalSection(int who) {
 Produces and changes semaphores accordingly.
 */
 void producer() {
+  
   for(int i = 0; i < 5; i++){
-    //sem_wait(mutexEmpty);
-    //sem_wait(mutexLock);
+    printSemValues();
+    semop(semEmpty, semWait, 1);
+    semop(semLock, semWait, 1);
     criticalSection(PROD);
-    //sem_post(mutexLock);
-    //sem_post(mutexFull);
+    semop(semLock, semSignal, 1);
+    semop(semFull, semSignal, 1);
   }
 }
 
@@ -58,13 +70,14 @@ void producer() {
 Consumes and changes semaphores accordingly.
 */
 void consumer() {
-
+  
   for (int i=0; i < 5; i++) {
-    //sem_wait(mutexFull);
-    //sem_wait(mutexLock);
+    printSemValues();
+    semop(semFull, semWait, 1);
+    semop(semLock, semWait, 1);
     criticalSection(CONS);
-    //sem_post(mutexLock);
-    //sem_post(mutexEmpty);
+    semop(semLock, semSignal, 1);
+    semop(semEmpty, semSignal, 1);
   }
   
   exit(0);
@@ -86,7 +99,7 @@ void createSemaphores(int initialValueFull){
   semSignal[0].sem_flg = SEM_UNDO;
 
   short int in[1];
-  in[0] = 0;
+  in[0] = 1;
 
   //create the mutex semaphore.
   semLock = semget(SEMKEY, 1, 0777 | IPC_CREAT);
@@ -106,21 +119,24 @@ void createSemaphores(int initialValueFull){
 Closes semaphores.
 */
 void closeSemaphores(){
-
+  semctl(semFull, 1, IPC_RMID, NULL);
+  semctl(semEmpty, 1, IPC_RMID, NULL);
+  semctl(semLock, 1, IPC_RMID, NULL);
 }
 
 int main(int argc, char** argv) {
+
+  createSemaphores(100);
   
   int value;
   if ((value = fork()) < 0)
     printf("Child could not be created.\n");
   else
   {
-    createSemaphores(100);
     if (value == 0)
       producer();
     else
       consumer();
-    //closeSemaphores();
+    closeSemaphores();
   }
 }
