@@ -16,6 +16,9 @@ Description:
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <semaphore.h>
+#include <sys/sem.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
 
 
 const char* FULL_NAME = "/depalmaFull";
@@ -59,7 +62,7 @@ Consumes and changes semaphores accordingly.
 */
 void consumer() {
 
-  for (int i=0; i < 10; i++) {
+  for (int i=0; i < 5; i++) {
     sem_wait(mutexFull);
     sem_wait(mutexLock);
     criticalSection(CONS);
@@ -74,7 +77,8 @@ void consumer() {
 Creates semaphores with specified initial value in empty semaphore.
 */
 void createSemaphores(int initialValueFull){
-  mutexFull = sem_open(FULL_NAME, O_CREAT, S_IRWXG, 0);
+  mutexFull = sem_open(FULL_NAME, O_CREAT, 7777, 0);
+  printf("pointer: %p\n",mutexFull);
   mutexEmpty = sem_open(EMPTY_NAME, O_CREAT, S_IRWXG, initialValueFull);
   mutexLock = sem_open(LOCK_NAME, O_CREAT, S_IRWXG, 1);
 }
@@ -89,14 +93,17 @@ void closeSemaphores(){
 }
 
 int main(int argc, char** argv) {
-  createSemaphores(100);
+  
   int value;
   if ((value = fork()) < 0)
     printf("Child could not be created.\n");
   else
+  {
+    createSemaphores(100);
     if (value == 0)
       producer();
     else
       consumer();
-  closeSemaphores();
+    //closeSemaphores();
+  }
 }
