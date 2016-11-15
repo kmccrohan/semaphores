@@ -20,14 +20,11 @@ Description:
 #include <sys/types.h>
 #include <sys/ipc.h>
 
+#define SEMKEY 0 
+typedef struct sembuf sem_buf;
+sem_buf semWait[1], semSignal[1];
 
-const char* FULL_NAME = "/depalmaFull";
-const char* EMPTY_NAME = "/depalmaFull";
-const char* LOCK_NAME = "/depalmaMutexLock";
-
-sem_t* mutexFull;
-sem_t* mutexEmpty;
-sem_t* mutexLock;
+int semFull, semEmpty, semLock;
 
 // Constants
 #define PROD 1
@@ -49,11 +46,11 @@ Produces and changes semaphores accordingly.
 */
 void producer() {
   for(int i = 0; i < 5; i++){
-    sem_wait(mutexEmpty);
-    sem_wait(mutexLock);
+    //sem_wait(mutexEmpty);
+    //sem_wait(mutexLock);
     criticalSection(PROD);
-    sem_post(mutexLock);
-    sem_post(mutexFull);
+    //sem_post(mutexLock);
+    //sem_post(mutexFull);
   }
 }
 
@@ -63,11 +60,11 @@ Consumes and changes semaphores accordingly.
 void consumer() {
 
   for (int i=0; i < 5; i++) {
-    sem_wait(mutexFull);
-    sem_wait(mutexLock);
+    //sem_wait(mutexFull);
+    //sem_wait(mutexLock);
     criticalSection(CONS);
-    sem_post(mutexLock);
-    sem_post(mutexEmpty);
+    //sem_post(mutexLock);
+    //sem_post(mutexEmpty);
   }
   
   exit(0);
@@ -77,19 +74,39 @@ void consumer() {
 Creates semaphores with specified initial value in empty semaphore.
 */
 void createSemaphores(int initialValueFull){
-  mutexFull = sem_open(FULL_NAME, O_CREAT, 7777, 0);
-  printf("pointer: %p\n",mutexFull);
-  mutexEmpty = sem_open(EMPTY_NAME, O_CREAT, S_IRWXG, initialValueFull);
-  mutexLock = sem_open(LOCK_NAME, O_CREAT, S_IRWXG, 1);
+
+  //set the buffer values for wait.
+  semWait[0].sem_num = 0;
+  semWait[0].sem_op = -1; //decrement
+  semWait[0].sem_flg = SEM_UNDO;   
+
+  //set the buffer values for signal 
+  semSignal[0].sem_num = 0;
+  semSignal[0].sem_op = 1; //increment
+  semSignal[0].sem_flg = SEM_UNDO;
+
+  short int in[1];
+  in[0] = 0;
+
+  //create the mutex semaphore.
+  semLock = semget(SEMKEY, 1, 0777 | IPC_CREAT);
+  semctl(semLock, 1 , SETALL, in);
+
+  // Create empty and full semaphores, set initial values accordingly.
+  in[0] = 0;
+  semFull = semget(SEMKEY, 1, 0777 | IPC_CREAT);
+  semctl(semFull, 1 , SETALL, in);
+
+  in[0] = initialValueFull;
+  semEmpty = semget(SEMKEY, 1, 0777 | IPC_CREAT);
+  semctl(semEmpty, 1 , SETALL, in);
 }
 
 /**
 Closes semaphores.
 */
 void closeSemaphores(){
-  sem_close(mutexFull);
-  sem_close(mutexEmpty);
-  sem_close(mutexLock);
+
 }
 
 int main(int argc, char** argv) {
