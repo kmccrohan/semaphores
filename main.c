@@ -15,7 +15,6 @@ Description:
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <semaphore.h>
 #include <sys/sem.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -56,8 +55,8 @@ Produces and changes semaphores accordingly.
 */
 void producer() {
   
-  for(int i = 0; i < 5; i++){
-    printSemValues();
+  for(int i = 0; i < 5; i++)
+  {
     semop(semEmpty, semWait, 1);
     semop(semLock, semWait, 1);
     criticalSection(PROD);
@@ -69,15 +68,17 @@ void producer() {
 /**
 Consumes and changes semaphores accordingly.
 */
-void consumer() {
+void consumer() 
+{
   
-  for (int i=0; i < 5; i++) {
-    printSemValues();
+  for (int i=0; i < 5; i++) 
+  {
     semop(semFull, semWait, 1);
     semop(semLock, semWait, 1);
     criticalSection(CONS);
     semop(semLock, semSignal, 1);
     semop(semEmpty, semSignal, 1);
+    sleep(1);
   }
   
   exit(0);
@@ -124,6 +125,9 @@ void closeSemaphores(){
   semctl(semLock, 1, IPC_RMID, NULL);
 }
 
+/**
+Main
+*/
 int main(int argc, char** argv) {
 
   createSemaphores(100);
