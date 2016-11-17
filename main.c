@@ -18,6 +18,7 @@ Description:
 #include <sys/sem.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+#include <wait.h>
 
 #define SEMKEY 0 
 typedef struct sembuf sem_buf;
@@ -63,10 +64,10 @@ void producer()
     criticalSection(PROD);
     semop(semLock, semSignal, 1);
     semop(semFull, semSignal, 1);
-    printf("Producer - ");
-    printSemValues();
   }
 
+  // Wait for consumer to finish before exiting.
+  wait(NULL);
   exit(0);
 }
 
@@ -75,23 +76,17 @@ Consumes and changes semaphores accordingly.
 */
 void consumer() 
 {
-  printSemValues();
-  
+
   for (int i=0; i < 5; i++) 
   {
-    printf("Entering - ");
-    printSemValues(); 
     semop(semFull, semWait, 1);
     semop(semLock, semWait, 1);
     criticalSection(CONS);
     semop(semLock, semSignal, 1);
     semop(semEmpty, semSignal, 1);
-    printf("Consumer - ");
-    printSemValues();
-    //sleep(1);
+    sleep(1);
   }
 
-  printSemValues();
 }
 
 /**
@@ -144,6 +139,8 @@ int main(int argc, char** argv)
 {
 
   createSemaphores(100);
+
+  printSemValues();
   
   int value;
   if ((value = fork()) < 0)
@@ -151,10 +148,12 @@ int main(int argc, char** argv)
   else
   {
     if (value == 0)
-      producer();
-    else
       consumer();
+    else
+      producer();
   }
+
+  printSemValues();
 
   closeSemaphores();
 }
