@@ -63,7 +63,11 @@ void producer()
     criticalSection(PROD);
     semop(semLock, semSignal, 1);
     semop(semFull, semSignal, 1);
+    printf("Producer - ");
+    printSemValues();
   }
+
+  exit(0);
 }
 
 /**
@@ -71,18 +75,23 @@ Consumes and changes semaphores accordingly.
 */
 void consumer() 
 {
+  printSemValues();
   
   for (int i=0; i < 5; i++) 
   {
+    printf("Entering - ");
+    printSemValues(); 
     semop(semFull, semWait, 1);
     semop(semLock, semWait, 1);
     criticalSection(CONS);
     semop(semLock, semSignal, 1);
     semop(semEmpty, semSignal, 1);
-    sleep(1);
+    printf("Consumer - ");
+    printSemValues();
+    //sleep(1);
   }
-  
-  exit(0);
+
+  printSemValues();
 }
 
 /**
@@ -110,11 +119,11 @@ void createSemaphores(int initialValueFull)
 
   // Create empty and full semaphores, set initial values accordingly.
   in[0] = 0;
-  semFull = semget(SEMKEY, 1, 0777 | IPC_CREAT);
+  semFull = semget(SEMKEY+1, 1, 0777 | IPC_CREAT);
   semctl(semFull, 1 , SETALL, in);
 
   in[0] = initialValueFull;
-  semEmpty = semget(SEMKEY, 1, 0777 | IPC_CREAT);
+  semEmpty = semget(SEMKEY+2, 1, 0777 | IPC_CREAT);
   semctl(semEmpty, 1 , SETALL, in);
 }
 
@@ -145,6 +154,7 @@ int main(int argc, char** argv)
       producer();
     else
       consumer();
-    closeSemaphores();
   }
+
+  closeSemaphores();
 }
